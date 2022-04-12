@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"github.com/Masterminds/sprig"
 	"github.com/dop251/goja"
+	"github.com/explodingriceballs/protogen/vm"
 	"log"
 	"os"
 	"path"
-	"protogen/vm"
 	"text/template"
 )
 

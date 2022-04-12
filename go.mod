@@ -1,4 +1,4 @@
-module protogen
+module github.com/explodingriceballs/protogen
 
 go 1.17
 

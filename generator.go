@@ -1,12 +1,12 @@
 package main
 
 import (
+	"github.com/explodingriceballs/protogen/vm"
 	"github.com/spf13/viper"
 	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
-	"protogen/vm"
 )
 
 type Generator struct {

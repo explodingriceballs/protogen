@@ -2,10 +2,10 @@ package vm
 
 import (
 	"github.com/dop251/goja"
+	"github.com/explodingriceballs/protogen/vm/modules"
 	"go.uber.org/zap"
 	"os"
 	"path/filepath"
-	"protogen/vm/modules"
 	"sync"
 )
 
