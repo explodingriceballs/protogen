@@ -3,10 +3,10 @@ package main
 import (
 	"errors"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/explodingriceballs/protogen/parser"
 	"log"
 	"os"
 	"path"
-	"protogen/parser"
 )
 
 type Parser struct {
