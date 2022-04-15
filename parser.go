@@ -100,13 +100,28 @@ func (p *Parser) EnterRpc(ctx *parser.RpcContext) {
 	// Create RPC
 	rpc := NewRPC(rpcName, requestMessage, responseMessage)
 
-	// Set streaming fields
-	if ctx.STREAM(0) != nil {
+	streamNodes := ctx.AllSTREAM()
+	if len(streamNodes) == 2 {
 		rpc.IsRequestStreaming = true
-	}
-
-	if ctx.STREAM(1) != nil {
 		rpc.IsResponseStreaming = true
+	} else if len(streamNodes) == 1 {
+		foundReturnNode := false
+		// Loop through the children of the RPC
+		for _, node := range ctx.GetChildren() {
+			// Mark whether we passed the return node
+			if node == ctx.RETURNS() {
+				foundReturnNode = true
+			}
+
+			// If we hit the streaming node, set the streaming flag
+			if node == streamNodes[0] {
+				if foundReturnNode {
+					rpc.IsResponseStreaming = true
+				} else {
+					rpc.IsRequestStreaming = true
+				}
+			}
+		}
 	}
 
 	// Start the RPC block
