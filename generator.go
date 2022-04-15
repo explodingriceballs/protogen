@@ -12,7 +12,7 @@ import (
 type Generator struct {
 	sourceDirectory string
 	outDirectory    string
-	languages       string
+	generator       string
 	packages        []*Package
 }
 
@@ -38,8 +38,7 @@ func (g *Generator) Run() error {
 
 func (g *Generator) generateFiles() error {
 	// Create a new LUA runtime
-	tmplDir := g.findTemplateDirectory(g.languages)
-	filePath := path.Join(tmplDir, "index.tsx")
+	filePath := path.Join(g.generator, "index.tsx")
 	fileContents, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
@@ -57,7 +56,7 @@ func (g *Generator) generateFiles() error {
 		return err
 	}
 
-	engine := NewTemplateEngine(tmplDir)
+	engine := NewTemplateEngine(g.generator)
 	engineObj, err := engine.Create(runtime)
 	if err != nil {
 		return err
@@ -79,15 +78,6 @@ func (g *Generator) generateFiles() error {
 	if err := generatorScript.Invoke("getFiles", &outputFiles); err != nil {
 		return err
 	}
-
-	//packagePath := pkg.Name
-	//
-	////Create the package output directory
-	//if filepath.Base(g.outDirectory) == pkg.Name {
-	//	packagePath = g.outDirectory
-	//} else {
-	//	packagePath = path.Join(g.outDirectory, pkg.Name)
-	//}
 
 	for _, outputFile := range outputFiles {
 		targetFile := path.Join(g.outDirectory, outputFile.Name)
@@ -154,20 +144,11 @@ func (g *Generator) processFile(file string) error {
 	return nil
 }
 
-func (g *Generator) findTemplateDirectory(language string) string {
-	for _, templateDir := range viper.GetStringSlice("templateDirectories") {
-		if _, err := os.Stat(path.Join(templateDir, language, "index.tsx")); err == nil {
-			return path.Join(templateDir, language)
-		}
-	}
-	return ""
-}
-
-func CreateGenerator(sourceDirectory string, outDirectory string, languages string) *Generator {
+func CreateGenerator(sourceDirectory string, outDirectory string, generator string) *Generator {
 	return &Generator{
 		sourceDirectory: sourceDirectory,
 		outDirectory:    outDirectory,
-		languages:       languages,
+		generator:       generator,
 		packages:        []*Package{},
 	}
 }
