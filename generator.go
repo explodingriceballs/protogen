@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/explodingriceballs/protogen/vm"
-	"github.com/spf13/viper"
 	"io/fs"
 	"os"
 	"path"
@@ -14,6 +13,7 @@ type Generator struct {
 	outDirectory    string
 	generator       string
 	packages        []*Package
+	inclDirs        []string
 }
 
 func (g *Generator) Run() error {
@@ -123,7 +123,7 @@ func (g *Generator) ListSourceFiles() ([]string, error) {
 func (g *Generator) processFile(file string) error {
 	// Create a parser
 	parser := NewParser(file)
-	parser.IncludeDirectories = viper.GetStringSlice("includeDirectories")
+	parser.IncludeDirectories = g.inclDirs
 
 	// Parse protobuf file
 	if err := parser.Parse(); err != nil {
@@ -142,6 +142,10 @@ func (g *Generator) processFile(file string) error {
 		g.packages = append(g.packages, parser.GetPackage())
 	}
 	return nil
+}
+
+func (g *Generator) SetInclDirs(dirs []string) {
+	g.inclDirs = dirs
 }
 
 func CreateGenerator(sourceDirectory string, outDirectory string, generator string) *Generator {

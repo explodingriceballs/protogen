@@ -2,35 +2,40 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"os"
+	"github.com/integrii/flaggy"
 )
 
 var (
 	sourceDirectory string
 	outDirectory    string
 	generator       string
+	includeDirs     []string
 )
 
 func main() {
-	rootCmd := &cobra.Command{
-		Use: "protogen",
-		Run: func(cmd *cobra.Command, args []string) {
-			generator := CreateGenerator(sourceDirectory, outDirectory, generator)
-			if err := generator.Run(); err != nil {
-				fmt.Println("failed to generate code: ", err)
-			}
-		},
+	// Set the name & basics
+	flaggy.SetName("protogen")
+	flaggy.ShowHelpOnUnexpectedDisable()
+
+	// Flags
+	flaggy.String(&sourceDirectory, "s", "source", "source directory / files")
+	flaggy.String(&outDirectory, "o", "out", "output directory")
+	flaggy.String(&generator, "g", "generator", "directory containing the generator")
+	flaggy.StringSlice(&includeDirs, "i", "include", "include directories")
+
+	// Parse
+	flaggy.Parse()
+
+	// Check for supplied flags
+	if sourceDirectory == "" || outDirectory == "" || generator == "" {
+		flaggy.ShowHelp("")
+		return
 	}
 
-	rootCmd.PersistentFlags().StringVar(&sourceDirectory, "source", "", "source directory / files")
-	rootCmd.PersistentFlags().StringVar(&outDirectory, "out", "", "output directory")
-	rootCmd.PersistentFlags().StringVar(&generator, "generator", "", "directory containing the generator")
-	_ = rootCmd.MarkPersistentFlagRequired("source")
-	_ = rootCmd.MarkPersistentFlagRequired("out")
-	_ = rootCmd.MarkPersistentFlagRequired("generator")
-
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
+	// Run the generator
+	generator := CreateGenerator(sourceDirectory, outDirectory, generator)
+	generator.SetInclDirs(includeDirs)
+	if err := generator.Run(); err != nil {
+		fmt.Println("failed to generate code: ", err)
 	}
 }
