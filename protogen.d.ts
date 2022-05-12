@@ -41,6 +41,12 @@ export type Message = {
     Enums: Enum[];
     Fields: Field[];
     NestedMessages: Message[];
+    OneOfs: OneOf[];
+}
+
+export type OneOf = {
+    Name: string;
+    Fields: Field[];
 }
 
 export type Field = {
