@@ -1,7 +1,6 @@
-// Code generated from Ionizer.g4 by ANTLR 4.9.3. DO NOT EDIT.
+// Code generated from /Users/bneuenfeldt/Development/source/protogen/Ionizer.g4 by ANTLR 4.9.2. DO NOT EDIT.
 
 package parser // Ionizer
-
 import "github.com/antlr/antlr4/runtime/Go/antlr"
 
 // BaseIonizerListener is a complete listener for a parse tree produced by IonizerParser.
@@ -56,6 +55,18 @@ func (s *BaseIonizerListener) EnterOptionName(ctx *OptionNameContext) {}
 
 // ExitOptionName is called when production optionName is exited.
 func (s *BaseIonizerListener) ExitOptionName(ctx *OptionNameContext) {}
+
+// EnterOptionBody is called when production optionBody is entered.
+func (s *BaseIonizerListener) EnterOptionBody(ctx *OptionBodyContext) {}
+
+// ExitOptionBody is called when production optionBody is exited.
+func (s *BaseIonizerListener) ExitOptionBody(ctx *OptionBodyContext) {}
+
+// EnterOptionElement is called when production optionElement is entered.
+func (s *BaseIonizerListener) EnterOptionElement(ctx *OptionElementContext) {}
+
+// ExitOptionElement is called when production optionElement is exited.
+func (s *BaseIonizerListener) ExitOptionElement(ctx *OptionElementContext) {}
 
 // EnterField is called when production field is entered.
 func (s *BaseIonizerListener) EnterField(ctx *FieldContext) {}

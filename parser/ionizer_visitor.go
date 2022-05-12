@@ -1,7 +1,6 @@
-// Code generated from Ionizer.g4 by ANTLR 4.9.3. DO NOT EDIT.
+// Code generated from /Users/bneuenfeldt/Development/source/protogen/Ionizer.g4 by ANTLR 4.9.2. DO NOT EDIT.
 
 package parser // Ionizer
-
 import "github.com/antlr/antlr4/runtime/Go/antlr"
 
 // A complete Visitor for a parse tree produced by IonizerParser.
@@ -25,6 +24,12 @@ type IonizerVisitor interface {
 
 	// Visit a parse tree produced by IonizerParser#optionName.
 	VisitOptionName(ctx *OptionNameContext) interface{}
+
+	// Visit a parse tree produced by IonizerParser#optionBody.
+	VisitOptionBody(ctx *OptionBodyContext) interface{}
+
+	// Visit a parse tree produced by IonizerParser#optionElement.
+	VisitOptionElement(ctx *OptionElementContext) interface{}
 
 	// Visit a parse tree produced by IonizerParser#field.
 	VisitField(ctx *FieldContext) interface{}

@@ -147,6 +147,25 @@ func (p *Parser) ExitMessageDef(*parser.MessageDefContext) {
 	p.err(p.parserState.FinalizeMessage())
 }
 
+// EnterOneof is called when oneof is entered.
+func (p *Parser) EnterOneof(ctx *parser.OneofContext) {
+	name := ctx.OneofName()
+	p.err(p.parserState.StartOneOf(NewOneOf(name.GetText())))
+}
+
+// ExitOneof is called when oneof is entered.
+func (p *Parser) ExitOneof(ctx *parser.OneofContext) {
+	p.err(p.parserState.FinalizeOneOf())
+}
+
+func (p *Parser) EnterOneofField(ctx *parser.OneofFieldContext) {
+	field := NewField(ctx.FieldName().GetText(), ctx.Type_().GetText())
+	if ctx.FieldNumber() != nil {
+		field.FieldNumber = ctx.FieldNumber().GetText()
+	}
+	p.err(p.parserState.AddOneOfField(field))
+}
+
 // EnterExtendDef is called when production extendDef is entered.
 func (p *Parser) EnterExtendDef(ctx *parser.ExtendDefContext) {
 	messageName := ctx.ExtendName().GetText()
@@ -188,10 +207,39 @@ func (p *Parser) ExitField(*parser.FieldContext) {
 // EnterOptionStatement is called when the parser enters an option statement
 func (p *Parser) EnterOptionStatement(ctx *parser.OptionStatementContext) {
 	key := ctx.OptionName().GetText()
-	value := ctx.Constant().GetText()
+	if key[0] == '(' {
+		key = key[1 : len(key)-1]
+	}
 
-	option := NewOption(key, value[1:len(value)-1])
-	p.err(p.parserState.AddOption(option))
+	option := NewOption(key)
+	p.err(p.parserState.StartOption(option))
+}
+
+func (p *Parser) ExitOptionStatement(ctx *parser.OptionStatementContext) {
+	p.err(p.parserState.FinalizeOption())
+}
+
+// EnterOptionBody is called when an option body is entered.
+func (p *Parser) EnterOptionBody(ctx *parser.OptionBodyContext) {
+	if ctx.Constant() == nil {
+		return
+	}
+	value := ctx.Constant().GetText()
+	if value[0] == '"' {
+		value = value[1 : len(value)-1]
+	}
+	p.err(p.parserState.SetOptionValue(value))
+}
+
+// EnterOptionElement is called when the option body is entered
+func (p *Parser) EnterOptionElement(ctx *parser.OptionElementContext) {
+	fieldName := ctx.FieldName()
+	p.err(p.parserState.StartOption(NewOption(fieldName.GetText())))
+}
+
+// ExitOptionElement is called when an option body is exited
+func (p *Parser) ExitOptionElement(ctx *parser.OptionElementContext) {
+	p.err(p.parserState.FinalizeOption())
 }
 
 // EnterFieldOption is called when an option on a field is entered (not required to exit)
@@ -206,8 +254,10 @@ func (p *Parser) EnterFieldOption(ctx *parser.FieldOptionContext) {
 		value = value[1 : len(value)-1]
 	}
 
-	option := NewOption(key, value)
-	p.err(p.parserState.AddOption(option))
+	option := NewOption(key)
+	option.Value = value
+	p.err(p.parserState.StartOption(option))
+	p.err(p.parserState.FinalizeOption())
 }
 
 // EnterEnumDef is called when an enumDef is entered.

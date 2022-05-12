@@ -38,6 +38,7 @@ type RPC struct {
 	ResponseMsg         string
 	IsRequestStreaming  bool
 	IsResponseStreaming bool
+	Options             []*Option
 }
 
 func NewRPC(name string, requestMsg string, responseMsg string) *RPC {
@@ -45,12 +46,13 @@ func NewRPC(name string, requestMsg string, responseMsg string) *RPC {
 }
 
 type Option struct {
-	Key   string
-	Value string
+	Key        string
+	Value      string
+	Properties map[string]interface{}
 }
 
-func NewOption(key string, value string) *Option {
-	return &Option{Key: key, Value: value}
+func NewOption(key string) *Option {
+	return &Option{Key: key, Properties: map[string]interface{}{}}
 }
 
 type Message struct {
@@ -59,10 +61,20 @@ type Message struct {
 	Fields         []*Field
 	Enums          []*Enum
 	NestedMessages []*Message
+	OneOfs         []*OneOf
 }
 
 func NewMessage(name string) *Message {
 	return &Message{Name: name}
+}
+
+type OneOf struct {
+	Name   string
+	Fields []*Field
+}
+
+func NewOneOf(name string) *OneOf {
+	return &OneOf{Name: name}
 }
 
 type Field struct {

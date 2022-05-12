@@ -46,12 +46,21 @@ packageStatement
 // Option
 
 optionStatement
-  : OPTION optionName EQ constant SEMI
+  : OPTION optionName EQ optionBody SEMI
   ;
 
 optionName
   : fullIdent
   | LP fullIdent RP ( DOT fullIdent )?
+  ;
+
+optionBody
+  : LC optionElement* RC
+  | constant
+  ;
+
+optionElement
+  : fieldName COLON optionBody SEMI?
   ;
 
 // Normal Field

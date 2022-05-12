@@ -1,7 +1,6 @@
-// Code generated from Ionizer.g4 by ANTLR 4.9.3. DO NOT EDIT.
+// Code generated from /Users/bneuenfeldt/Development/source/protogen/Ionizer.g4 by ANTLR 4.9.2. DO NOT EDIT.
 
 package parser // Ionizer
-
 import "github.com/antlr/antlr4/runtime/Go/antlr"
 
 type BaseIonizerVisitor struct {
@@ -29,6 +28,14 @@ func (v *BaseIonizerVisitor) VisitOptionStatement(ctx *OptionStatementContext) i
 }
 
 func (v *BaseIonizerVisitor) VisitOptionName(ctx *OptionNameContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseIonizerVisitor) VisitOptionBody(ctx *OptionBodyContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseIonizerVisitor) VisitOptionElement(ctx *OptionElementContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

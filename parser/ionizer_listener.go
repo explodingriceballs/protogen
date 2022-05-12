@@ -1,7 +1,6 @@
-// Code generated from Ionizer.g4 by ANTLR 4.9.3. DO NOT EDIT.
+// Code generated from /Users/bneuenfeldt/Development/source/protogen/Ionizer.g4 by ANTLR 4.9.2. DO NOT EDIT.
 
 package parser // Ionizer
-
 import "github.com/antlr/antlr4/runtime/Go/antlr"
 
 // IonizerListener is a complete listener for a parse tree produced by IonizerParser.
@@ -25,6 +24,12 @@ type IonizerListener interface {
 
 	// EnterOptionName is called when entering the optionName production.
 	EnterOptionName(c *OptionNameContext)
+
+	// EnterOptionBody is called when entering the optionBody production.
+	EnterOptionBody(c *OptionBodyContext)
+
+	// EnterOptionElement is called when entering the optionElement production.
+	EnterOptionElement(c *OptionElementContext)
 
 	// EnterField is called when entering the field production.
 	EnterField(c *FieldContext)
@@ -193,6 +198,12 @@ type IonizerListener interface {
 
 	// ExitOptionName is called when exiting the optionName production.
 	ExitOptionName(c *OptionNameContext)
+
+	// ExitOptionBody is called when exiting the optionBody production.
+	ExitOptionBody(c *OptionBodyContext)
+
+	// ExitOptionElement is called when exiting the optionElement production.
+	ExitOptionElement(c *OptionElementContext)
 
 	// ExitField is called when exiting the field production.
 	ExitField(c *FieldContext)
