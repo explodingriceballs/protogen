@@ -15,6 +15,7 @@ Flags:
   -h, --help               help for protogen
       --out string         output directory
       --source string      source directory / files
+      --include string     include directories
 ```
 
 ### Generating code
