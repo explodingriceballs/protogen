@@ -24,8 +24,9 @@ func NewPackage(name string) *Package {
 }
 
 type Service struct {
-	Name string
-	RPCs []*RPC
+	Name    string
+	RPCs    []*RPC
+	Options []*Option
 }
 
 func NewService(name string) *Service {

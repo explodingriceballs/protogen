@@ -223,6 +223,9 @@ func (p *ParserState) StartOption(option *Option) error {
 	case stateInMessage:
 		message := p.curStateRef().(*Message)
 		message.Options = append(message.Options, option)
+	case stateInService:
+		service := p.curStateRef().(*Service)
+		service.Options = append(service.Options, option)
 	default:
 		panic("NYI")
 	}
