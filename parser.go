@@ -243,9 +243,6 @@ func (p *Parser) EnterFieldOption(ctx *parser.FieldOptionContext) {
 	key := ctx.OptionName().GetText()
 	value := ctx.Constant().GetText()
 
-	if key[0] == '"' || key[0] == '(' {
-		key = key[1 : len(key)-1]
-	}
 	if value[0] == '"' {
 		value = value[1 : len(value)-1]
 	}
