@@ -207,10 +207,6 @@ func (p *Parser) ExitField(*parser.FieldContext) {
 // EnterOptionStatement is called when the parser enters an option statement
 func (p *Parser) EnterOptionStatement(ctx *parser.OptionStatementContext) {
 	key := ctx.OptionName().GetText()
-	if key[0] == '(' {
-		key = key[1 : len(key)-1]
-	}
-
 	option := NewOption(key)
 	p.err(p.parserState.StartOption(option))
 }
