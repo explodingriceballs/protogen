@@ -104,6 +104,10 @@ func TestComplexProtobuf(t *testing.T) {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 
 	var (
+		//httpCustomPatternMessage = newMessage("CustomHttpPattern").
+		//	addNativeField("kind", "1", false, "string").
+		//	addNativeField("path", "2", false, "string").
+		//	addOption("(skip_generation)", "true")
 		httpCustomPatternMessage = func(c *Context) *Message {
 			return &Message{
 				types:       c.typeDictionary,
@@ -124,10 +128,13 @@ func TestComplexProtobuf(t *testing.T) {
 						Type:        nativeTypes["string"],
 					},
 				},
-				Options: []*Option{
-					{
-						OptionName:  "(skip_generation)",
-						OptionValue: "true",
+				Options: &Options{
+					types: c.typeDictionary,
+					Options: []*Option{
+						{
+							OptionName:  "(skip_generation)",
+							OptionValue: "true",
+						},
 					},
 				},
 			}
@@ -227,10 +234,14 @@ func TestComplexProtobuf(t *testing.T) {
 						Type:        nativeTypes["bool"],
 					},
 				},
-				Options: []*Option{
-					{
-						OptionName:  "(skip_generation)",
-						OptionValue: "true",
+				Options: &Options{
+					types:  c.typeDictionary,
+					parent: MessageElementType,
+					Options: []*Option{
+						{
+							OptionName:  "(skip_generation)",
+							OptionValue: "true",
+						},
 					},
 				},
 			}
@@ -326,10 +337,91 @@ func TestComplexProtobuf(t *testing.T) {
 						IsRepeated:  true,
 						Type:        c.typeDictionary.newMsgTypeForTesting(validationFormatComparisonMessage(c)),
 					},
-					// TODO: enum & nested message
 				},
 			}
 		}
+		apiDataStatusEnum = func(c *Context) *Enum {
+			return &Enum{
+				types:    c.typeDictionary,
+				EnumName: "DataStatus",
+				EnumValues: []*EnumValue{
+					{Identifier: "DATA_STATUS_UNKNOWN", Number: "0"},
+					{Identifier: "DATA_STATUS_SCHEDULED", Number: "1"},
+					{Identifier: "DATA_STATUS_RUNNING", Number: "2"},
+					{Identifier: "DATA_STATUS_FAILED", Number: "3"},
+					{Identifier: "DATA_STATUS_SUSPENDED", Number: "4"},
+				},
+			}
+		}
+		apiDataFooType = func(c *Context) *Enum {
+			return &Enum{
+				types:    c.typeDictionary,
+				EnumName: "DataFooType",
+				EnumValues: []*EnumValue{
+					{Identifier: "DATA_FOO_TYPE_UNKNOWN", Number: "0"},
+					{Identifier: "DATA_FOO_TYPE_TIMED", Number: "1"},
+					{Identifier: "DATA_FOO_TYPE_DEPENDENCY", Number: "2"},
+				},
+			}
+		}
+		apiCreateDataRequest = func(c *Context) *Message {
+			return &Message{
+				types:       c.typeDictionary,
+				MessageName: "CreateDataRequest",
+				OneOf:       false,
+				Fields: []*Field{
+					{
+						types:       c.typeDictionary,
+						FieldName:   "name",
+						FieldNumber: "1",
+						IsRepeated:  false,
+						Type:        nativeTypes["string"],
+						Options: &Options{
+							types:  c.typeDictionary,
+							parent: FieldElementType,
+							Options: []*Option{
+								{
+									OptionName:  "(validation.format).type",
+									OptionValue: "ALPHA",
+								},
+							},
+						},
+					},
+				},
+				Options:  nil,
+				Messages: nil,
+			}
+		}
+		//apiNestedMessageOneOneOfMsg = func(c *Context) *Message {
+		//	return &Message{
+		//		types:       c.typeDictionary,
+		//		MessageName: "NestedOneOfMessage",
+		//		OneOf:       false,
+		//		Fields: []*Field{
+		//			{
+		//				types:       c.typeDictionary,
+		//				FieldName:   "value",
+		//				FieldNumber: "1",
+		//				IsRepeated:  true,
+		//				Type:        nativeTypes["string"],
+		//			},
+		//		},
+		//		Options:  nil,
+		//		Messages: nil,
+		//	}
+		//}
+		//apiNestedMessageOne = func(c *Context) *Message {
+		//	return &Message{
+		//		types:       c.typeDictionary,
+		//		MessageName: "NestedMessageOne",
+		//		OneOf:       false,
+		//		Fields: []*Field{
+		//			{},
+		//		},
+		//		Options:  nil,
+		//		Messages: []*Message{apiNestedMessageOneOneOfMsg(c)},
+		//	}
+		//}
 	)
 
 	// Create a new parser
@@ -356,6 +448,8 @@ func TestComplexProtobuf(t *testing.T) {
 	httpPackage := ctx.GetPackage("http")
 	assert.Len(t, httpPackage.Messages(), 2)
 	assert.Equal(t, httpCustomPatternMessage(ctx), httpPackage.Message("CustomHttpPattern"))
+	assert.Equal(t, true, httpPackage.Message("CustomHttpPattern").HasOption("http.skip_generation"))
+	assert.Equal(t, true, httpPackage.Message("CustomHttpPattern").GetOption("http.skip_generation"))
 	assert.Equal(t, httpRuleMessageRef, httpPackage.Message("HttpRule"))
 
 	// Verify the validation package
@@ -367,6 +461,24 @@ func TestComplexProtobuf(t *testing.T) {
 	assert.Len(t, validationPackage.Messages(), 1)
 	assert.Equal(t, validationFormatMessage(ctx), validationPackage.Message("FormatValidation"))
 	assert.Equal(t, validationFormatComparisonMessage(ctx), validationPackage.Message("FormatValidation").Message("Comparison"))
+
+	// Verify the API package
+	apiPackage := ctx.GetPackage("api")
+	assert.Len(t, apiPackage.Enums(), 2)
+	assert.Equal(t, apiDataStatusEnum(ctx), apiPackage.Enum("DataStatus"))
+	assert.Equal(t, apiDataFooType(ctx), apiPackage.Enum("DataFooType"))
+
+	assert.Len(t, apiPackage.Messages(), 6)
+
+	// Verify the overall create data request message
+	createDataRequestMessage := apiPackage.Message("CreateDataRequest")
+	assert.Equal(t, apiCreateDataRequest(ctx), createDataRequestMessage)
+
+	createDataRequestNameField := createDataRequestMessage.Field("name")
+	assert.Equal(t, true, createDataRequestNameField.HasOption("validation"))
+	assert.Equal(t, true, createDataRequestNameField.HasOption("validation.format"))
+	assert.Equal(t, true, createDataRequestNameField.HasOption("validation.format.type"))
+	assert.Equal(t, map[string]interface{}{}, createDataRequestNameField.GetOption("validation.format"))
 }
 
 //	// Create a new parser
@@ -561,3 +673,28 @@ func TestComplexProtobuf(t *testing.T) {
 //		}
 //	}
 //)
+
+//type msgBuilder struct {
+//	c    *Context
+//	name string
+//}
+//
+//func (m *msgBuilder) addNativeField(name string, number string, repeated bool, nativeField string) *msgBuilder {
+//
+//}
+//
+//func (m *msgBuilder) addOption(name string, value string) *msgBuilder {
+//
+//}
+//
+//func (m *msgBuilder) build() func(c *Context) *Message {
+//	return func(c *Context) *Message {
+//
+//	}
+//}
+//
+//func newMessage(name string) *msgBuilder {
+//	return &msgBuilder{
+//		name: name,
+//	}
+//}

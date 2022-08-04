@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/explodingriceballs/protogen/proto"
 	"github.com/explodingriceballs/protogen/vm"
 	"io/fs"
 	"os"
@@ -12,7 +13,7 @@ type Generator struct {
 	sourceDirectory string
 	outDirectory    string
 	generator       string
-	packages        []*Package
+	packages        []*proto.Package
 	inclDirs        []string
 }
 
@@ -22,12 +23,17 @@ func (g *Generator) Run() error {
 		return err
 	}
 
-	// Loop through all imported files
-	for _, file := range files {
-		if err := g.processFile(file); err != nil {
-			return err
-		}
+	parser := proto.NewParser(files, g.inclDirs)
+	if err := parser.Parse(); err != nil {
+		return err
 	}
+
+	// Loop through all imported files
+	//for _, file := range files {
+	//	if err := g.processFile(file); err != nil {
+	//		return err
+	//	}
+	//}
 
 	if err := g.generateFiles(); err != nil {
 		return err
@@ -56,7 +62,7 @@ func (g *Generator) generateFiles() error {
 		return err
 	}
 
-	engine := NewTemplateEngine(g.generator)
+	engine := NewTemplateEngine(g.generator, generatorScript)
 	engineObj, err := engine.Create(runtime)
 	if err != nil {
 		return err
@@ -121,26 +127,26 @@ func (g *Generator) ListSourceFiles() ([]string, error) {
 }
 
 func (g *Generator) processFile(file string) error {
-	// Create a parser
-	parser := NewParser(file)
-	parser.IncludeDirectories = g.inclDirs
-
-	// Parse protobuf file
-	if err := parser.Parse(); err != nil {
-		return err
-	}
-
-	// Loop over imports
-	for _, importedFile := range parser.Imports {
-		if err := g.processFile(importedFile.File); err != nil {
-			return err
-		}
-	}
+	// Create a proto
+	//proto := NewParser(file)
+	//proto.IncludeDirectories = g.inclDirs
+	//
+	//// Parse protobuf file
+	//if err := proto.Parse(); err != nil {
+	//	return err
+	//}
+	//
+	//// Loop over imports
+	//for _, importedFile := range proto.Imports {
+	//	if err := g.processFile(importedFile.File); err != nil {
+	//		return err
+	//	}
+	//}
 
 	// Add the package
-	if parser.GetPackage() != nil {
-		g.packages = append(g.packages, parser.GetPackage())
-	}
+	//if proto.GetPackage() != nil {
+	//	g.packages = append(g.packages, proto.GetPackage())
+	//}
 	return nil
 }
 
@@ -153,6 +159,6 @@ func CreateGenerator(sourceDirectory string, outDirectory string, generator stri
 		sourceDirectory: sourceDirectory,
 		outDirectory:    outDirectory,
 		generator:       generator,
-		packages:        []*Package{},
+		packages:        []*proto.Package{},
 	}
 }

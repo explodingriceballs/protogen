@@ -8,45 +8,76 @@ type Message struct {
 	noopVisitor
 	types *TypeDictionary
 
+	*Options
 	MessageName string
 	OneOf       bool
 	Fields      []*Field
-	Options     []*Option
 	Messages    []*Message
 }
 
+func (m *Message) DeclaresMessageType(name string) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *Message) DeclaresEnumType(name string) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *Message) GetName() string {
+	return m.MessageName
+}
+
+func (m *Message) GetType() ElementType {
+	return MessageElementType
+}
+
 func (m *Message) VisitMessage(message *parser.Message) (next bool) {
+	// If the message name is already set, we are looking at a nested message
 	if m.MessageName != "" {
-		m.types.startScope(message.MessageName)
+		// Create a new message
 		newMsg := NewMessage(m.types)
+
+		// Visit & append to nested messages
 		message.Accept(newMsg)
 		m.Messages = append(m.Messages, newMsg)
-		m.types.endScope(message.MessageName)
+
 		return false
 	}
+
+	// Set the message name
 	m.MessageName = message.MessageName
+
+	// Declare that we are starting a new scope with this message
+	m.types.startScope(m)
+
+	// Register ourself as a type
 	m.types.RegisterMessage(m)
 
 	// Process definitions first
 	for _, body := range message.MessageBody {
-		if _, ok := body.(*parser.Message); ok {
+		switch body.(type) {
+		case *parser.Message:
 			body.Accept(m)
-		}
-		if _, ok := body.(*parser.Enum); ok {
+		case *parser.Enum:
 			body.Accept(m)
 		}
 	}
 
 	// Process the rest
 	for _, body := range message.MessageBody {
-		if _, ok := body.(*parser.Message); ok {
+		switch body.(type) {
+		case *parser.Message:
 			continue
-		}
-		if _, ok := body.(*parser.Enum); ok {
+		case *parser.Enum:
 			continue
 		}
 		body.Accept(m)
 	}
+
+	// End our scope
+	m.types.endScope(m)
 
 	return false
 }
@@ -70,9 +101,9 @@ func (m *Message) VisitOneof(oneof *parser.Oneof) (next bool) {
 	}
 
 	// Register & assign
-	m.types.startScope(oneOfMsg.MessageName)
+	m.types.startScope(oneOfMsg)
 	m.types.RegisterMessage(oneOfMsg)
-	m.types.endScope(oneOfMsg.MessageName)
+	m.types.endScope(oneOfMsg)
 	oneOfField.Type = m.types.findType(oneOfMsg.MessageName)
 	m.Fields = append(m.Fields, oneOfField)
 	return false
@@ -86,13 +117,10 @@ func (m *Message) VisitField(field *parser.Field) (next bool) {
 }
 
 func (m *Message) VisitOption(option *parser.Option) (next bool) {
-	// Create a new option
-	newOption := NewOption()
-	option.Accept(newOption)
-	m.Options = append(m.Options, newOption)
-
-	// Skip comments
-	return false
+	if m.Options == nil {
+		m.Options = NewOptions(m, m.types)
+	}
+	return m.Options.VisitOption(option)
 }
 
 func (m *Message) Field(name string) *Field {

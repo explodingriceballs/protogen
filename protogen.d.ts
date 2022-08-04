@@ -1,5 +1,5 @@
 export class TemplateEngine {
-    render(template: string, params: any): string;
+    render(template: string, params: any, functions?: {}): string;
 }
 
 export interface Generator {

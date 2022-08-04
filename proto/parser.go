@@ -10,6 +10,20 @@ import (
 	"strings"
 )
 
+type ElementType int
+
+const (
+	PackageElementType ElementType = iota
+	EnumElementType
+	MessageElementType
+	FieldElementType
+)
+
+type Element interface {
+	GetName() string
+	GetType() ElementType
+}
+
 type Parser struct {
 	files              []string
 	processedFiles     []string

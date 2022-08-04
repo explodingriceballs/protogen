@@ -121,6 +121,10 @@ func (r *Runtime) Close() error {
 	return nil
 }
 
+func (r *Runtime) GetRuntime() *goja.Runtime {
+	return r.vm
+}
+
 func (r *Runtime) requireFile(name string) (goja.Value, error) {
 	// Base directory of the original source file (absolute)
 	baseDir, err := filepath.Abs(filepath.Dir(r.sourceFile))

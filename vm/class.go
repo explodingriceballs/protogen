@@ -70,6 +70,10 @@ func (c *Class) Invoke(fnName string, result interface{}, params ...interface{})
 	return err
 }
 
+func (c *Class) This() *goja.Object {
+	return c.this
+}
+
 func (c *Class) convertParams(params ...interface{}) []goja.Value {
 	vs := make([]goja.Value, len(params))
 	for idx, param := range params {

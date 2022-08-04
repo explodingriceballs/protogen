@@ -41,15 +41,15 @@ enum DataFooType {
 
 message CreateDataRequest {
   string name = 1 [(validation.format).type = ALPHA];
-  repeated string repeated_string_property = 2 [
-    (validation.format) = {
-      required: false,
-      type: ALPHA_NUM_UNICODE
-    }
-  ];
-  NestedMessageOne msg_one = 3;
-  NestedMessageTwo msg_two = 4;
-  string field = 5;
+//  repeated string repeated_string_property = 2 [
+//    (validation.format) = {
+//      required: false,
+//      type: ALPHA_NUM_UNICODE
+//    }
+//  ];
+//  NestedMessageOne msg_one = 3;
+//  NestedMessageTwo msg_two = 4;
+//  string field = 5;
 }
 
 message NestedMessageOne {

@@ -6,13 +6,26 @@ import (
 
 type Package struct {
 	noopVisitor
+	types *TypeDictionary
+
+	*Options
 	Name     string
 	messages []*Message
 	enums    []*Enum
 	services []*Service
-	options  []*Option
+}
 
-	types *TypeDictionary
+func (p *Package) DeclaresEnumType(name string) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p *Package) GetName() string {
+	return p.Name
+}
+
+func (p *Package) GetType() ElementType {
+	return PackageElementType
 }
 
 func (p *Package) VisitComment(comment *parser.Comment) {
@@ -25,9 +38,7 @@ func (p *Package) VisitEnum(enum *parser.Enum) (next bool) {
 	newEnum := NewEnum(p.types)
 
 	// Start the scope & process & end
-	p.types.startScope(enum.EnumName)
 	enum.Accept(newEnum)
-	p.types.endScope(enum.EnumName)
 
 	// Finally append to the list of enums
 	p.enums = append(p.enums, newEnum)
@@ -35,13 +46,13 @@ func (p *Package) VisitEnum(enum *parser.Enum) (next bool) {
 }
 
 func (p *Package) VisitExtend(extend *parser.Extend) (next bool) {
-	//extendMessage := NewMessage(p.types)
-	//for _, body := range extend.ExtendBody {
-	//	if field, ok := body.(*parser.Field); ok {
-	//		extendMessage.VisitField(field)
-	//	}
-	//}
-	//p.types.RegisterExtension(extend.MessageType, extendMessage)
+	extendMessage := NewMessage(p.types)
+	for _, body := range extend.ExtendBody {
+		if field, ok := body.(*parser.Field); ok {
+			extendMessage.VisitField(field)
+		}
+	}
+	p.types.RegisterExtension(extend.MessageType, extendMessage)
 	return false
 }
 
@@ -49,10 +60,8 @@ func (p *Package) VisitMessage(message *parser.Message) (next bool) {
 	// Create a new message, pass down the type dictionary
 	newMessage := NewMessage(p.types)
 
-	// Start the scope & process & end
-	p.types.startScope(message.MessageName)
+	// Visit the message
 	message.Accept(newMessage)
-	p.types.endScope(message.MessageName)
 
 	// Finally append to the list of messages
 	p.messages = append(p.messages, newMessage)
@@ -60,10 +69,10 @@ func (p *Package) VisitMessage(message *parser.Message) (next bool) {
 }
 
 func (p *Package) VisitOption(option *parser.Option) (next bool) {
-	newOption := NewOption()
-	option.Accept(newOption)
-	p.options = append(p.options, newOption)
-	return false
+	if p.Options == nil {
+		p.Options = NewOptions(p, p.types)
+	}
+	return p.Options.VisitOption(option)
 }
 
 func (p *Package) VisitService(service *parser.Service) (next bool) {

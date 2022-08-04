@@ -15,9 +15,29 @@ type Enum struct {
 	EnumValues []*EnumValue
 }
 
+func (e *Enum) DeclaresMessageType(name string) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e *Enum) DeclaresEnumType(name string) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e *Enum) GetName() string {
+	return e.EnumName
+}
+
+func (e *Enum) GetType() ElementType {
+	return EnumElementType
+}
+
 func (e *Enum) VisitEnum(enum *parser.Enum) (next bool) {
 	e.EnumName = enum.EnumName
+	e.types.startScope(e)
 	e.types.RegisterEnum(e)
+	e.types.endScope(e)
 	return true
 }
 

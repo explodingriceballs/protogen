@@ -14,27 +14,28 @@ type Context struct {
 func (c *Context) AcceptProtoFile(pkgName string, proto *parser.Proto) {
 	// Check if it should go into the default package
 	if pkgName == "" {
-		c.typeDictionary.startScope("")
+		c.typeDictionary.startScope(c.defaultPackage)
+		c.typeDictionary.declareTypes(proto.ProtoBody)
 		proto.Accept(c.defaultPackage)
-		c.typeDictionary.endScope("")
+		c.typeDictionary.endScope(c.defaultPackage)
 		return
 	}
 
 	// Loop thru existing packages
 	for _, pkg := range c.packages {
 		if pkg.Name == pkgName {
-			c.typeDictionary.startScope(pkg.Name)
+			c.typeDictionary.startScope(pkg)
 			proto.Accept(pkg)
-			c.typeDictionary.endScope(pkg.Name)
+			c.typeDictionary.endScope(pkg)
 			return
 		}
 	}
 
 	// Create a new package
 	newPkg := NewPackage(pkgName, c.typeDictionary)
-	c.typeDictionary.startScope(pkgName)
+	c.typeDictionary.startScope(newPkg)
 	proto.Accept(newPkg)
-	c.typeDictionary.endScope(pkgName)
+	c.typeDictionary.endScope(newPkg)
 	c.packages = append(c.packages, newPkg)
 }
 
