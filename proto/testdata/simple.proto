@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+message Production {
+  string id = 1;
+  string title = 2;
+}
+
+service ProductionService {
+  // returns Production by ID
+  rpc GetProduction (GetProductionRequest) returns (GetProductionResponse);
+}
+
+// GetProductionRequest allows to retrieve a production by ID
+message GetProductionRequest {
+  string production_id = 1; // must be specified
+}
+
+message GetProductionResponse {
+  Production production = 1;
+}
+
