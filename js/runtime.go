@@ -190,6 +190,8 @@ func (r *Runtime) requireFile(name string) (goja.Value, error) {
 	return exports, nil
 }
 
+// toESModuleExports & the export system for including native module is largely based on the code from k6:
+// https://github.com/grafana/k6/blob/d19102983eeaedf9d53e78ba73bb17f2357fc522/js/initcontext.go#L186
 func toESModuleExports(exp Exports) interface{} {
 	if exp.Named == nil {
 		return exp.Default
