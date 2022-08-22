@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -139,13 +140,19 @@ func (r *Runtime) requireFile(name string) (goja.Value, error) {
 		return nil, err
 	}
 
-	baseName := filepath.Base(name)
-	if v, ok := r.modules[baseName]; ok {
+	// Join the base dir & the required file
+	file := filepath.Join(baseDir, name)
+
+	// Module name
+	moduleName := strings.Replace(file, baseDir, "", 1)
+	if moduleName[0] == '/' {
+		moduleName = moduleName[1:]
+	}
+	if v, ok := r.modules[moduleName]; ok {
 		instance := v.NewModuleInstance(r.vm)
 		return r.vm.ToValue(toESModuleExports(instance.Exports())), nil
 	}
 
-	file := filepath.Join(baseDir, name)
 	if filepath.Ext(name) == "" {
 		for _, ext := range fileExt {
 			if _, err := os.Stat(file + ext); os.IsNotExist(err) {
