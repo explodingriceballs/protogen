@@ -1,9 +1,66 @@
 package vm
 
 import (
+	"github.com/dop251/goja"
+	"gotest.tools/v3/assert"
 	"os"
 	"testing"
 )
+
+type (
+	ModuleClass         struct{}
+	ModuleClassInstance struct {
+		rt *goja.Runtime
+		s  string
+	}
+)
+
+func (m *ModuleClassInstance) Exports() Exports {
+	return Exports{
+		Named: map[string]interface{}{
+			"ModuleClass": m.NewModuleClass,
+		},
+	}
+}
+
+func (m *ModuleClassInstance) NewModuleClass(call goja.ConstructorCall) *goja.Object {
+	m.s = call.Argument(0).String()
+	call.This.Set("GetString", func() string {
+		return "test - " + m.s
+	})
+	return nil
+}
+
+func (m *ModuleClass) Register(runtime *goja.Runtime) error {
+	return nil
+}
+
+func (m *ModuleClass) NewModuleInstance(runtime *goja.Runtime) Instance {
+	return &ModuleClassInstance{rt: runtime}
+}
+
+func TestRuntime_RegisterModule(t *testing.T) {
+	testFileBytes, err := os.ReadFile("testdata/modules.tsx")
+	assert.NilError(t, err)
+	runtime := NewRuntime(string(testFileBytes), "testdata/modules.tsx")
+	err = runtime.RegisterModule("modules_export", &ModuleClass{})
+	assert.NilError(t, err)
+
+	err = runtime.Execute()
+	assert.NilError(t, err)
+
+	defaultExport, err := runtime.GetDefaultExport()
+	assert.NilError(t, err)
+
+	err = defaultExport.Instantiate()
+	assert.NilError(t, err)
+
+	var result string
+	err = defaultExport.Invoke("TestFn", &result)
+	assert.NilError(t, err)
+
+	assert.Equal(t, result, "test - foobar")
+}
 
 func TestRuntime_Require(t *testing.T) {
 	type args struct {

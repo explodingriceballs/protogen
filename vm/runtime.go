@@ -30,6 +30,7 @@ type Runtime struct {
 	vm         *goja.Runtime
 	program    *goja.Program
 	exports    *goja.Object
+	modules    map[string]Module
 }
 
 func (r *Runtime) Compile() error {
@@ -93,6 +94,12 @@ func (r *Runtime) Execute() error {
 	return err
 }
 
+func (r *Runtime) RegisterModule(s string, m Module) error {
+	err := m.Register(r.vm)
+	r.modules[s] = m
+	return err
+}
+
 func (r *Runtime) CreateObject() *goja.Object {
 	return r.vm.NewObject()
 }
@@ -132,6 +139,12 @@ func (r *Runtime) requireFile(name string) (goja.Value, error) {
 		return nil, err
 	}
 
+	baseName := filepath.Base(name)
+	if v, ok := r.modules[baseName]; ok {
+		instance := v.NewModuleInstance(r.vm)
+		return r.vm.ToValue(toESModuleExports(instance.Exports())), nil
+	}
+
 	file := filepath.Join(baseDir, name)
 	if filepath.Ext(name) == "" {
 		for _, ext := range fileExt {
@@ -139,6 +152,7 @@ func (r *Runtime) requireFile(name string) (goja.Value, error) {
 				continue
 			}
 			file = file + ext
+			break
 		}
 	}
 
@@ -176,11 +190,35 @@ func (r *Runtime) requireFile(name string) (goja.Value, error) {
 	return exports, nil
 }
 
+func toESModuleExports(exp Exports) interface{} {
+	if exp.Named == nil {
+		return exp.Default
+	}
+	if exp.Default == nil {
+		return exp.Named
+	}
+
+	result := make(map[string]interface{}, len(exp.Named)+2)
+
+	for k, v := range exp.Named {
+		result[k] = v
+	}
+	// Maybe check that those weren't set
+	result["default"] = exp.Default
+	// this so babel works with the `default` when it transpiles from ESM to commonjs.
+	// This should probably be removed once we have support for ESM directly. So that require doesn't get support for
+	// that while ESM has.
+	result["__esModule"] = true
+
+	return result
+}
+
 func NewRuntime(source string, sourceFile string) *Runtime {
 	return &Runtime{
 		source:     source,
 		sourceFile: sourceFile,
 		compiled:   false,
 		vm:         goja.New(),
+		modules:    map[string]Module{},
 	}
 }
