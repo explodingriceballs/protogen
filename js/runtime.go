@@ -1,8 +1,8 @@
-package vm
+package js
 
 import (
 	"github.com/dop251/goja"
-	"github.com/explodingriceballs/protogen/vm/modules"
+	"github.com/explodingriceballs/protogen/js/modules"
 	"go.uber.org/zap"
 	"os"
 	"path/filepath"
