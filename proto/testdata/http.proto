@@ -15,7 +15,7 @@ extend google.protobuf.MethodOptions {
 }
 
 message CustomHttpPattern {
-  option (skip_generation) = true;
+  option (http.skip_generation) = true;
 
   // The name of this custom HTTP verb.
   string kind = 1;
@@ -26,7 +26,7 @@ message CustomHttpPattern {
 }
 
 message HttpRule {
-  option (skip_generation) = true;
+  option (http.skip_generation) = true;
 
   // Selects a method to which this rule applies.
   //

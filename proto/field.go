@@ -9,25 +9,37 @@ type Field struct {
 	types *TypeDictionary
 
 	*Options
-	FieldName   string
-	FieldNumber string
-	IsRepeated  bool
-	Type        *Type
+	fieldName   string
+	fieldNumber string
+	isRepeated  bool
+	t           *Type
 }
 
-func (f *Field) GetName() string {
-	return f.FieldName
+func (f *Field) Name() string {
+	return f.fieldName
 }
 
-func (f *Field) GetType() ElementType {
+func (f *Field) Type() *Type {
+	return f.t
+}
+
+func (f *Field) FieldNumber() string {
+	return f.fieldNumber
+}
+
+func (f *Field) IsRepeated() bool {
+	return f.isRepeated
+}
+
+func (f *Field) GetElementType() ElementType {
 	return FieldElementType
 }
 
 func (f *Field) VisitField(field *parser.Field) (next bool) {
-	f.FieldName = field.FieldName
-	f.FieldNumber = field.FieldNumber
-	f.IsRepeated = field.IsRepeated
-	f.Type = f.types.findType(field.Type)
+	f.fieldName = field.FieldName
+	f.fieldNumber = field.FieldNumber
+	f.isRepeated = field.IsRepeated
+	f.t = f.types.findType(field.Type)
 
 	if len(field.FieldOptions) > 0 {
 		f.Options = NewOptions(f, f.types)
@@ -45,8 +57,10 @@ func (f *Field) VisitOption(option *parser.Option) (next bool) {
 }
 
 func NewField(types *TypeDictionary) *Field {
-	return &Field{
+	f := &Field{
 		noopVisitor: noopVisitor{},
 		types:       types,
 	}
+	f.Options = NewOptions(f, types)
+	return f
 }

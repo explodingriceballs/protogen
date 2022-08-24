@@ -9,15 +9,15 @@ import (
 type ExtensionType int
 
 const (
-	UnknownOption ExtensionType = iota
-	FileOption
-	MessageOption
-	FieldOption
-	OneofOption
-	EnumOption
-	EnumValueOption
-	ServiceOption
-	MethodOption
+	UnknownExtension ExtensionType = iota
+	FileExtension
+	MessageExtension
+	FieldExtension
+	OneOfExtension
+	EnumExtension
+	EnumValueExtension
+	ServiceExtension
+	MethodExtension
 )
 
 func extensionTypeFromString(name string) ExtensionType {
@@ -28,24 +28,24 @@ func extensionTypeFromString(name string) ExtensionType {
 	}
 	switch actualOptionName {
 	case "FileOptions":
-		return FileOption
+		return FileExtension
 	case "MessageOptions":
-		return MessageOption
+		return MessageExtension
 	case "FieldOptions":
-		return FieldOption
+		return FieldExtension
 	case "OneofOptions":
-		return OneofOption
+		return OneOfExtension
 	case "EnumOptions":
-		return EnumOption
+		return EnumExtension
 	case "EnumValueOptions":
-		return EnumValueOption
+		return EnumValueExtension
 	case "ServiceOptions":
-		return ServiceOption
+		return ServiceExtension
 	case "MethodOptions":
-		return MethodOption
+		return MethodExtension
 	default:
 		log.Warn().Str("option", name).Msg("option unrecognized. not parsing.")
-		return UnknownOption
+		return UnknownExtension
 	}
 }
 
@@ -71,12 +71,40 @@ type Type struct {
 	isNative   bool
 	nativeType string
 
+	scope         string
 	referenceType string
-	//packageHint   string
 	isMessageType bool
 	isEnumType    bool
 	message       *Message
 	enum          *Enum
+}
+
+func (t *Type) IsNative() bool {
+	return t.isNative
+}
+
+func (t *Type) GetNativeType() string {
+	return t.nativeType
+}
+
+func (t *Type) GetFullyQualifiedName() string {
+	return t.scope
+}
+
+func (t *Type) IsMessage() bool {
+	return t.isMessageType
+}
+
+func (t *Type) GetMessage() *Message {
+	return t.message
+}
+
+func (t *Type) IsEnum() bool {
+	return t.isEnumType
+}
+
+func (t *Type) GetEnum() *Enum {
+	return t.enum
 }
 
 type TypeDictionary struct {
@@ -87,28 +115,27 @@ type TypeDictionary struct {
 
 func (d *TypeDictionary) startScope(element Element) {
 	d.currentScope = append(d.currentScope, element)
-	log.Debug().Str("startScope", element.GetName()).Str("scope", d.getScope()).Msg("Starting scope")
+	//log.Debug().Str("startScope", element.Name()).Str("scope", d.getScope()).Msg("Starting scope")
 }
 
 func (d *TypeDictionary) endScope(element Element) {
 	elementIdx := -1
 	for idx, scopeName := range d.currentScope {
-		if scopeName.GetName() == element.GetName() {
+		if scopeName.Name() == element.Name() {
 			elementIdx = idx
 		}
 	}
 	if elementIdx == -1 {
-		panic("unexpected scope end: " + element.GetName())
+		panic("unexpected scope end: " + element.Name())
 	}
 	d.currentScope = append(d.currentScope[:elementIdx], d.currentScope[elementIdx+1:]...)
-	log.Debug().Str("endScope", element.GetName()).Str("scope", d.getScope()).Msg("Ending scope")
-
+	//log.Debug().Str("endScope", element.Name()).Str("scope", d.getScope()).Msg("Ending scope")
 }
 
 func (d *TypeDictionary) getScopeUpTo(lastElement Element) string {
 	scope := ""
 	for idx, element := range d.currentScope {
-		scope += element.GetName()
+		scope += element.Name()
 		if element == lastElement {
 			return scope
 		}
@@ -122,7 +149,7 @@ func (d *TypeDictionary) getScopeUpTo(lastElement Element) string {
 func (d *TypeDictionary) getScope() string {
 	scope := ""
 	for idx, element := range d.currentScope {
-		scope += element.GetName()
+		scope += element.Name()
 		if idx < len(d.currentScope)-1 {
 			scope += "."
 		}
@@ -136,10 +163,10 @@ func (d *TypeDictionary) RegisterExtension(extends string, msg *Message) {
 		d.extensions[extensionType] = map[string][]*Message{}
 	}
 	// TODO: fix me?
-	d.extensions[extensionType][d.currentScope[0].GetName()] = append(d.extensions[extensionType][d.currentScope[0].GetName()], msg)
+	d.extensions[extensionType][d.currentScope[0].Name()] = append(d.extensions[extensionType][d.currentScope[0].Name()], msg)
 }
 
-func (d *TypeDictionary) RegisterMessage(m *Message) {
+func (d *TypeDictionary) RegisterMessage(m *Message) *Type {
 	// Check the type already exists & just needs to be associated
 	if existingType, ok := d.types[d.getScope()]; ok {
 		existingType.isNative = false
@@ -148,11 +175,11 @@ func (d *TypeDictionary) RegisterMessage(m *Message) {
 		existingType.isEnumType = false
 		existingType.message = m
 		existingType.enum = nil
-		return
+		return existingType
 	}
 
 	// Check if the type already exists but doesn't match because of scopes
-	//if existingType, ok := d.types[m.MessageName]; ok && existingType.packageHint == d.currentScope[0] {
+	//if existingType, ok := d.types[m.msgName]; ok && existingType.packageHint == d.currentScope[0] {
 	//	existingType.isNative = false
 	//	existingType.nativeType = ""
 	//	existingType.isMessageType = true
@@ -162,15 +189,18 @@ func (d *TypeDictionary) RegisterMessage(m *Message) {
 	//	return
 	//}
 
-	d.types[d.getScope()] = &Type{
+	t := &Type{
 		isNative:      false,
 		nativeType:    "",
-		referenceType: m.MessageName,
+		scope:         d.getScope(),
+		referenceType: m.msgName,
 		isMessageType: true,
 		isEnumType:    false,
 		message:       m,
 		enum:          nil,
 	}
+	d.types[d.getScope()] = t
+	return t
 }
 
 func (d *TypeDictionary) RegisterEnum(enum *Enum) {
@@ -186,7 +216,8 @@ func (d *TypeDictionary) RegisterEnum(enum *Enum) {
 	d.types[d.getScope()] = &Type{
 		isNative:      false,
 		nativeType:    "",
-		referenceType: enum.EnumName,
+		scope:         d.getScope(),
+		referenceType: enum.enumName,
 		isMessageType: false,
 		isEnumType:    true,
 		message:       nil,
@@ -199,14 +230,18 @@ func (d *TypeDictionary) findType(t string) *Type {
 		return nativeType
 	}
 
+	if foundType, ok := d.types[t]; ok {
+		return foundType
+	}
+
 	// Check if the type is defined in the current or any parent scopes (only happens when we already visited the definition)
 	for idx := len(d.currentScope) - 1; idx >= 0; idx-- {
-		if d.currentScope[idx].GetName() == t {
+		if d.currentScope[idx].Name() == t {
 			return d.types[d.getScope()]
 		}
 		searchScopeKeys := make([]string, len(d.currentScope[0:idx+1]))
 		for idy := 0; idy < idx+1; idy++ {
-			searchScopeKeys[idy] = d.currentScope[idy].GetName()
+			searchScopeKeys[idy] = d.currentScope[idy].Name()
 		}
 		//copy(searchScopeKeys, d.currentScope[0:idx+1])
 		searchScope := append(searchScopeKeys, t)
@@ -220,7 +255,7 @@ func (d *TypeDictionary) findType(t string) *Type {
 	//for idx := len(d.currentScope) - 1; idx >= 0; idx-- {
 	//	scope := d.currentScope[idx]
 	//	scopeUpToElement := d.getScopeUpTo(scope)
-	//	newType := &Type{
+	//	newType := &t{
 	//		referenceType: t,
 	//		isMessageType: false,
 	//		isEnumType:    false,
@@ -248,7 +283,7 @@ func (d *TypeDictionary) findType(t string) *Type {
 	//lookupType := t
 	//log.Info().Msg(d.getScope())
 	//// Scope to global if the identifier contains no dots
-	//if !strings.Contains(t, ".") && d.currentScope[0].GetName() == "" {
+	//if !strings.Contains(t, ".") && d.currentScope[0].Name() == "" {
 	//	lookupType = "." + lookupType
 	//}
 	//
@@ -257,11 +292,11 @@ func (d *TypeDictionary) findType(t string) *Type {
 	//}
 	//
 	//// Self reference
-	//if d.currentScope[len(d.currentScope)-1].GetName() == t {
+	//if d.currentScope[len(d.currentScope)-1].Name() == t {
 	//	return d.types[d.getScope()]
 	//}
 	//
-	//newType := &Type{
+	//newType := &t{
 	//	referenceType: t,
 	//	isMessageType: false,
 	//	isEnumType:    false,
@@ -273,11 +308,12 @@ func (d *TypeDictionary) findType(t string) *Type {
 	return nil
 }
 
-func (d *TypeDictionary) newMsgTypeForTesting(msg *Message) *Type {
+func (d *TypeDictionary) newMsgTypeForTesting(scope string, msg *Message) *Type {
 	return &Type{
 		isNative:      false,
 		nativeType:    "",
-		referenceType: msg.MessageName,
+		scope:         scope + msg.msgName,
+		referenceType: msg.msgName,
 		isMessageType: true,
 		isEnumType:    false,
 		message:       msg,
@@ -285,11 +321,12 @@ func (d *TypeDictionary) newMsgTypeForTesting(msg *Message) *Type {
 	}
 }
 
-func (d *TypeDictionary) newEnumTypeForTesting(enum *Enum) *Type {
+func (d *TypeDictionary) newEnumTypeForTesting(scope string, enum *Enum) *Type {
 	return &Type{
 		isNative:      false,
 		nativeType:    "",
-		referenceType: enum.EnumName,
+		scope:         scope + enum.enumName,
+		referenceType: enum.enumName,
 		isMessageType: false,
 		isEnumType:    true,
 		message:       nil,
@@ -302,6 +339,7 @@ func (d *TypeDictionary) declareTypes(declarations []parser.Visitee) {
 		if msgDecl, ok := body.(*parser.Message); ok {
 			d.types[d.getScope()+"."+msgDecl.MessageName] = &Type{
 				referenceType: msgDecl.MessageName,
+				scope:         d.getScope() + "." + msgDecl.MessageName,
 				isMessageType: true,
 				isEnumType:    false,
 				message:       nil,
@@ -311,6 +349,7 @@ func (d *TypeDictionary) declareTypes(declarations []parser.Visitee) {
 		if enumDecl, ok := body.(*parser.Enum); ok {
 			d.types[d.getScope()+"."+enumDecl.EnumName] = &Type{
 				referenceType: enumDecl.EnumName,
+				scope:         d.getScope() + "." + enumDecl.EnumName,
 				isMessageType: true,
 				isEnumType:    false,
 				message:       nil,

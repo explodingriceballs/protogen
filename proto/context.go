@@ -23,7 +23,7 @@ func (c *Context) AcceptProtoFile(pkgName string, proto *parser.Proto) {
 
 	// Loop thru existing packages
 	for _, pkg := range c.packages {
-		if pkg.Name == pkgName {
+		if pkg.name == pkgName {
 			c.typeDictionary.startScope(pkg)
 			proto.Accept(pkg)
 			c.typeDictionary.endScope(pkg)
@@ -31,9 +31,10 @@ func (c *Context) AcceptProtoFile(pkgName string, proto *parser.Proto) {
 		}
 	}
 
-	// Create a new package
+	// New a new package
 	newPkg := NewPackage(pkgName, c.typeDictionary)
 	c.typeDictionary.startScope(newPkg)
+	c.typeDictionary.declareTypes(proto.ProtoBody)
 	proto.Accept(newPkg)
 	c.typeDictionary.endScope(newPkg)
 	c.packages = append(c.packages, newPkg)
@@ -43,9 +44,9 @@ func (c *Context) Packages() []*Package {
 	return c.packages
 }
 
-func (c *Context) GetPackage(name string) *Package {
+func (c *Context) Package(name string) *Package {
 	for _, pkg := range c.packages {
-		if pkg.Name == name {
+		if pkg.name == name {
 			return pkg
 		}
 	}

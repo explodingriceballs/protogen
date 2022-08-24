@@ -7,21 +7,23 @@ import (
 	"github.com/yoheimuta/go-protoparser/v4/parser"
 	"os"
 	"path"
-	"strings"
 )
 
 type ElementType int
 
 const (
-	PackageElementType ElementType = iota
+	UnknownElementType ElementType = iota
+	PackageElementType
 	EnumElementType
 	MessageElementType
 	FieldElementType
+	ServiceElementType
+	RPCElementType
 )
 
 type Element interface {
-	GetName() string
-	GetType() ElementType
+	Name() string
+	GetElementType() ElementType
 }
 
 type Parser struct {
@@ -36,19 +38,19 @@ type Parser struct {
 
 func (p *Parser) Parse() error {
 	for _, targetFile := range p.files {
-		if err := p.parseFile(targetFile); err != nil {
+		if err := p.parseFile(targetFile, false); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (p *Parser) parseFile(fileName string) error {
+func (p *Parser) parseFile(fileName string, isImported bool) error {
 	// Skip over protobuf include files
 	// TODO: figure out a better way
-	if strings.HasPrefix(fileName, "google/protobuf") {
-		return nil
-	}
+	//if strings.HasPrefix(fileName, "google/protobuf") {
+	//	return nil
+	//}
 
 	// Locate the file
 	file, err := p.findFile(fileName)
@@ -91,7 +93,7 @@ func (p *Parser) parseFile(fileName string) error {
 		if importedFile[0] == '"' {
 			importedFile = importedFile[1 : len(importedFile)-1]
 		}
-		if err := p.parseFile(importedFile); err != nil {
+		if err := p.parseFile(importedFile, true); err != nil {
 			return err
 		}
 	}

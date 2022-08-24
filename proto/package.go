@@ -9,32 +9,22 @@ type Package struct {
 	types *TypeDictionary
 
 	*Options
-	Name     string
+	name     string
 	messages []*Message
 	enums    []*Enum
 	services []*Service
 }
 
-func (p *Package) DeclaresEnumType(name string) bool {
-	//TODO implement me
-	panic("implement me")
+func (p *Package) Name() string {
+	return p.name
 }
 
-func (p *Package) GetName() string {
-	return p.Name
-}
-
-func (p *Package) GetType() ElementType {
+func (p *Package) GetElementType() ElementType {
 	return PackageElementType
 }
 
-func (p *Package) VisitComment(comment *parser.Comment) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (p *Package) VisitEnum(enum *parser.Enum) (next bool) {
-	// Create a new enum
+	// New a new enum
 	newEnum := NewEnum(p.types)
 
 	// Start the scope & process & end
@@ -57,7 +47,7 @@ func (p *Package) VisitExtend(extend *parser.Extend) (next bool) {
 }
 
 func (p *Package) VisitMessage(message *parser.Message) (next bool) {
-	// Create a new message, pass down the type dictionary
+	// New a new message, pass down the type dictionary
 	newMessage := NewMessage(p.types)
 
 	// Visit the message
@@ -82,9 +72,18 @@ func (p *Package) VisitService(service *parser.Service) (next bool) {
 	return false
 }
 
+func (p *Package) Service(s string) *Service {
+	for _, srv := range p.services {
+		if srv.serviceName == s {
+			return srv
+		}
+	}
+	return nil
+}
+
 func (p *Package) Message(name string) *Message {
 	for _, msg := range p.messages {
-		if msg.MessageName == name {
+		if msg.msgName == name {
 			return msg
 		}
 	}
@@ -93,7 +92,7 @@ func (p *Package) Message(name string) *Message {
 
 func (p *Package) Enum(name string) *Enum {
 	for _, enum := range p.enums {
-		if enum.EnumName == name {
+		if enum.enumName == name {
 			return enum
 		}
 	}
@@ -128,6 +127,6 @@ func (p *Package) Extensions() map[ExtensionType]map[string][]*Message {
 func NewPackage(name string, types *TypeDictionary) *Package {
 	return &Package{
 		types: types,
-		Name:  name,
+		name:  name,
 	}
 }

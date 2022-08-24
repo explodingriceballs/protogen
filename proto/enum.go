@@ -3,38 +3,40 @@ package proto
 import "github.com/yoheimuta/go-protoparser/v4/parser"
 
 type EnumValue struct {
-	Identifier string
-	Number     string
+	identifier string
+	number     string
+}
+
+func (e *EnumValue) Identifier() string {
+	return e.identifier
+}
+
+func (e *EnumValue) Number() string {
+	return e.number
 }
 
 type Enum struct {
 	noopVisitor
 	types *TypeDictionary
 
-	EnumName   string
-	EnumValues []*EnumValue
+	enumName   string
+	enumValues []*EnumValue
 }
 
-func (e *Enum) DeclaresMessageType(name string) bool {
-	//TODO implement me
-	panic("implement me")
+func (e *Enum) Name() string {
+	return e.enumName
 }
 
-func (e *Enum) DeclaresEnumType(name string) bool {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (e *Enum) GetName() string {
-	return e.EnumName
-}
-
-func (e *Enum) GetType() ElementType {
+func (e *Enum) GetElementType() ElementType {
 	return EnumElementType
 }
 
+func (e *Enum) Values() []*EnumValue {
+	return e.enumValues
+}
+
 func (e *Enum) VisitEnum(enum *parser.Enum) (next bool) {
-	e.EnumName = enum.EnumName
+	e.enumName = enum.EnumName
 	e.types.startScope(e)
 	e.types.RegisterEnum(e)
 	e.types.endScope(e)
@@ -42,9 +44,9 @@ func (e *Enum) VisitEnum(enum *parser.Enum) (next bool) {
 }
 
 func (e *Enum) VisitEnumField(field *parser.EnumField) (next bool) {
-	e.EnumValues = append(e.EnumValues, &EnumValue{
-		Identifier: field.Ident,
-		Number:     field.Number,
+	e.enumValues = append(e.enumValues, &EnumValue{
+		identifier: field.Ident,
+		number:     field.Number,
 	})
 	// Skip comments
 	return false
