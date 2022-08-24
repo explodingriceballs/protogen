@@ -267,6 +267,7 @@ func TestComplexProtobuf(t *testing.T) {
 				{identifier: "LONGITUDE", number: "14"},
 				{identifier: "UUID", number: "15"},
 			},
+			Options: &Options{},
 		}
 		validationComparableValidationTypeEnum = &Enum{
 			enumName: "ComparableValidationType",
@@ -280,6 +281,7 @@ func TestComplexProtobuf(t *testing.T) {
 				{identifier: "MAX", number: "6"},
 				{identifier: "MIN", number: "7"},
 			},
+			Options: &Options{},
 		}
 		validationFormatComparisonMessage = &Message{
 			msgName: "Comparison",
@@ -334,6 +336,14 @@ func TestComplexProtobuf(t *testing.T) {
 				{identifier: "DATA_STATUS_FAILED", number: "3"},
 				{identifier: "DATA_STATUS_SUSPENDED", number: "4"},
 			},
+			Options: &Options{
+				Options: []*Option{
+					{
+						OptionName:  "(validation.test_bool)",
+						OptionValue: "true",
+					},
+				},
+			},
 		}
 		apiDataFooType = &Enum{
 			enumName: "DataFooType",
@@ -342,6 +352,7 @@ func TestComplexProtobuf(t *testing.T) {
 				{identifier: "DATA_FOO_TYPE_TIMED", number: "1"},
 				{identifier: "DATA_FOO_TYPE_DEPENDENCY", number: "2"},
 			},
+			Options: &Options{},
 		}
 		apiNestedMessageOneOneOfMsg = &Message{
 			msgName: "NestedOneOfMessage",

@@ -19,6 +19,7 @@ type Enum struct {
 	noopVisitor
 	types *TypeDictionary
 
+	*Options
 	enumName   string
 	enumValues []*EnumValue
 }
@@ -52,8 +53,14 @@ func (e *Enum) VisitEnumField(field *parser.EnumField) (next bool) {
 	return false
 }
 
+func (e *Enum) VisitOption(option *parser.Option) (next bool) {
+	return e.Options.VisitOption(option)
+}
+
 func NewEnum(types *TypeDictionary) *Enum {
-	return &Enum{
+	e := &Enum{
 		types: types,
 	}
+	e.Options = NewOptions(e, types)
+	return e
 }
