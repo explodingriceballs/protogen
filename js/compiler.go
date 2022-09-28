@@ -44,21 +44,21 @@ func (c *Compiler) Compile(source string, filename string, main bool) (*goja.Pro
 	if err != nil {
 		return nil, err
 	}
-	transpiledSource := value.ToObject(c.tscVm).Get("outputText").String()
+	code := value.ToObject(c.tscVm).Get("outputText").String()
 
 	// Transform the code
-	opts := c.getOptions()
-	opts["filename"] = filename
-	v, err := c.TransformFunc(c.babelCompiler, c.babelVm.ToValue(transpiledSource), c.babelVm.ToValue(opts))
-	if err != nil {
-		return nil, err
-	}
-	vObject := v.ToObject(c.babelVm)
-
-	var code string
-	if err := c.babelVm.ExportTo(vObject.Get("code"), &code); err != nil {
-		return nil, err
-	}
+	//opts := c.getOptions()
+	//opts["filename"] = filename
+	//v, err := c.TransformFunc(c.babelCompiler, c.babelVm.ToValue(transpiledSource), c.babelVm.ToValue(opts))
+	//if err != nil {
+	//	return nil, err
+	//}
+	//vObject := v.ToObject(c.babelVm)
+	//
+	//var code string
+	//if err := c.babelVm.ExportTo(vObject.Get("code"), &code); err != nil {
+	//	return nil, err
+	//}
 
 	if !main {
 		code = "(function(module, exports){\n" + code + "\n})\n"
@@ -88,7 +88,7 @@ func (c *Compiler) getOptions() map[string]interface{} {
 			// "transform-es2015-function-name", // in goja
 			// []interface{}{"transform-es2015-arrow-functions", map[string]interface{}{"spec": false}}, // in goja
 			// "transform-es2015-block-scoped-functions", // in goja
-			[]interface{}{"transform-es2015-classes", map[string]interface{}{"loose": false}},
+			//[]interface{}{"transform-es2015-classes", map[string]interface{}{"loose": false}},
 			"transform-es2015-object-super",
 			// "transform-es2015-shorthand-properties", // in goja
 			// "transform-es2015-duplicate-keys", // in goja

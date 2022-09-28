@@ -54,47 +54,23 @@ func (m *ModuleInstance) NewTemplate(call goja.ConstructorCall) *goja.Object {
 	return m.rt.ToValue(tmpl).ToObject(m.rt)
 }
 
-//func (t *TemplateEngine) Register(runtime *goja.Runtime) error {
-//	err := runtime.Set("Template", func(call goja.ConstructorCall) *goja.Object {
-//		tmpl := NewTemplate(t.TemplateDir, call.Argument(0).String())
-//		_ = call.This.Set("TemplateName", func(_ goja.FunctionCall) goja.Value {
-//			return runtime.ToValue(tmpl.TemplateName())
-//		})
-//		_ = call.This.Set("Execute", func(call goja.FunctionCall) goja.Value {
-//			err, compiledTmpl := tmpl.Execute()
-//			if err != nil {
-//				panic(runtime.ToValue(err))
-//			}
-//			return runtime.ToValue(compiledTmpl)
-//		})
-//		_ = call.This.Set("Set", func(name string, val goja.Value) {
-//			tmpl.Set(name, val.Export())
-//		})
-//		_ = call.This.Set("RegisterFunc", func(name string, callable goja.Callable) {
-//			tmpl.RegisterFunc(name, func(params ...interface{}) string {
-//				nativeVals := make([]goja.Value, len(params))
-//				for idx, param := range params {
-//					nativeVals[idx] = runtime.ToValue(param)
-//				}
-//				value, err := callable(nil, nativeVals...)
-//				if err != nil {
-//					panic(runtime.ToValue(err))
-//				}
-//				return value.String()
-//			})
-//		})
-//		return nil
-//	})
-//
-//	return err
-//}
-
 func (t *Template) TemplateName() string {
 	return path.Join(t.templateDir, t.template)
 }
 
-func (t *Template) RegisterFunc(name string, fn func(params ...interface{}) string) {
-	t.funcs[name] = fn
+func (t *Template) RegisterFunc(name string, fn goja.Callable) {
+	t.funcs[name] = func(params ...interface{}) interface{} {
+		nativeParams := make([]goja.Value, len(params))
+		for paramIdx, param := range params {
+			nativeParams[paramIdx] = t.rt.ToValue(param)
+		}
+		value, err := fn(nil, nativeParams...)
+		if err != nil {
+			js.Panic(t.rt, err)
+		}
+
+		return value.Export()
+	}
 }
 
 func (t *Template) Set(name string, val any) {

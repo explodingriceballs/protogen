@@ -1,19 +1,24 @@
 package main
 
 import (
+	"github.com/explodingriceballs/protogen/js"
 	"github.com/explodingriceballs/protogen/proto"
-	"github.com/explodingriceballs/protogen/vm"
+	"github.com/explodingriceballs/protogen/template"
 	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 )
 
+type File struct {
+	Name     string
+	Contents string
+}
+
 type Generator struct {
 	sourceDirectory string
 	outDirectory    string
 	generator       string
-	packages        []*proto.Package
 	inclDirs        []string
 }
 
@@ -28,28 +33,25 @@ func (g *Generator) Run() error {
 		return err
 	}
 
-	// Loop through all imported files
-	//for _, file := range files {
-	//	if err := g.processFile(file); err != nil {
-	//		return err
-	//	}
-	//}
-
-	if err := g.generateFiles(); err != nil {
+	if err := g.generateFiles(parser.GetContext()); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (g *Generator) generateFiles() error {
-	// Create a new LUA runtime
+func (g *Generator) generateFiles(ctx *proto.Context) error {
+	// New a new LUA runtime
 	filePath := path.Join(g.generator, "index.tsx")
 	fileContents, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
 	}
-	runtime := vm.NewRuntime(string(fileContents), filePath)
+	runtime := js.NewRuntime(string(fileContents), filePath)
+	err = runtime.RegisterModule("protogen/template", &template.Module{TemplateDir: g.generator})
+	if err != nil {
+		return err
+	}
 
 	// Execute once to get hooks
 	if err := runtime.Execute(); err != nil {
@@ -62,26 +64,18 @@ func (g *Generator) generateFiles() error {
 		return err
 	}
 
-	engine := NewTemplateEngine(g.generator, generatorScript)
-	engineObj, err := engine.Create(runtime)
-	if err != nil {
-		return err
-	}
-
 	// Create a new class
-	if err := generatorScript.Instantiate(engineObj); err != nil {
+	if err := generatorScript.Instantiate(); err != nil {
 		return err
 	}
 
 	// Loop through all parsed packages
-	for _, pkg := range g.packages {
-		if err := generatorScript.InvokeVoid("processPackage", pkg); err != nil {
-			return err
-		}
+	if err := generatorScript.InvokeVoid("Process", ctx); err != nil {
+		return err
 	}
 
 	var outputFiles []File
-	if err := generatorScript.Invoke("getFiles", &outputFiles); err != nil {
+	if err := generatorScript.Invoke("GetFiles", &outputFiles); err != nil {
 		return err
 	}
 
@@ -126,30 +120,6 @@ func (g *Generator) ListSourceFiles() ([]string, error) {
 	return files, nil
 }
 
-func (g *Generator) processFile(file string) error {
-	// Create a proto
-	//proto := NewParser(file)
-	//proto.IncludeDirectories = g.inclDirs
-	//
-	//// Parse protobuf file
-	//if err := proto.Parse(); err != nil {
-	//	return err
-	//}
-	//
-	//// Loop over imports
-	//for _, importedFile := range proto.Imports {
-	//	if err := g.processFile(importedFile.File); err != nil {
-	//		return err
-	//	}
-	//}
-
-	// Add the package
-	//if proto.GetPackage() != nil {
-	//	g.packages = append(g.packages, proto.GetPackage())
-	//}
-	return nil
-}
-
 func (g *Generator) SetInclDirs(dirs []string) {
 	g.inclDirs = dirs
 }
@@ -159,6 +129,5 @@ func CreateGenerator(sourceDirectory string, outDirectory string, generator stri
 		sourceDirectory: sourceDirectory,
 		outDirectory:    outDirectory,
 		generator:       generator,
-		packages:        []*proto.Package{},
 	}
 }

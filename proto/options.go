@@ -291,6 +291,10 @@ func toNativeValue(value string, optionType *Type) interface{} {
 		}
 		return boolValue
 	case "string":
+		if value[0] == '"' {
+			return value[1 : len(value)-1]
+		}
+		return value
 	case "bytes":
 	}
 	return nil

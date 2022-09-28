@@ -1,60 +1,116 @@
-export class TemplateEngine {
-    render(template: string, params: any, functions?: {}): string;
+export class Template {
+    constructor(file: string);
+
+    TemplateName(): string;
+
+    Execute(): string;
+
+    Set(name: string, val: any);
+
+    RegisterFunc(name: string, fn: (...params: any) => {});
+}
+
+export interface Context {
+    Packages(): Package[];
+
+    Package(name: string): Package;
+
+    GlobalScope(): Package;
 }
 
 export interface Generator {
-    processPackage(p: Package): void;
+    Process(ctx: Context): void;
 
-    getFiles(): File[];
+    GetFiles(): File[];
 }
 
-export type Package = {
-    Name: string;
-    Services: Service[];
-    Messages: Message[];
-    Enums: Enum[];
-    Extensions: Message[];
-    Options: Option[];
+export interface Options {
+    Has(name: string): boolean;
+
+    Get(name: string): any;
 }
 
-export type Service = {
-    Name: string;
-    RPCs: RPC[];
+export interface Package extends Options {
+    Name(): string;
+
+    Services(): Service[];
+
+    Service(name: string): Service;
+
+    Messages(): Message[];
+
+    Message(name: string): Message;
+
+    Enums(): Enum[];
+
+    Enum(name: string): Enum;
+
 }
 
-export type RPC = {
-    Name: string;
-    RequestMsg: string;
-    ResponseMsg: string;
-    IsRequestStreaming: boolean;
-    IsResponseStreaming: boolean;
+export interface Service extends Options {
+    Name(): string;
+
+    RPCs(): RPC[];
+
+    RPC(name: string): RPC;
 }
 
-export type Option = {
-    Key: string;
-    Value: string;
+export interface RPC extends Options {
+    Name(): string;
+
+    RequestMessageType(): Type;
+
+    ResponseMessageType(): Type;
+
+    // IsRequestStreaming: boolean;
+    // IsResponseStreaming: boolean;
 }
 
-export type Message = {
-    Name: string;
-    Option: Option[];
-    Enums: Enum[];
-    Fields: Field[];
-    NestedMessages: Message[];
-    OneOfs: OneOf[];
+export interface Message extends Options {
+    Name(): string;
+
+    Type(): Type;
+
+    Enums(): Enum[];
+
+    Enum(name: string): Enum;
+
+    Messages(): Message[];
+
+    Message(name: string): Message;
+
+    IsOneOf(): boolean;
+
+    Fields(): Field[];
+
+    Field(name: string): Field;
 }
 
-export type OneOf = {
-    Name: string;
-    Fields: Field[];
+export interface Field extends Options {
+    Name(): string;
+
+    Type(): Type;
+
+    FieldNumber(): string;
+
+    IsRepeated(): boolean;
+
 }
 
-export type Field = {
-    Name: string;
-    Type: string;
-    FieldNumber: string;
-    IsRepeated: boolean;
-    Options: Option[];
+export interface Type {
+    IsNative(): boolean;
+
+    GetNativeType(): string;
+
+    GetFullyQualifiedName(): string;
+
+    IsMessage(): boolean;
+
+    GetMessage(): Message;
+
+    IsEnum(): boolean;
+
+    GetEnum(): Enum;
 }
 
 export type File = {
@@ -62,14 +118,15 @@ export type File = {
     Contents: string;
 }
 
-export type Enum = {
-    Name: string
-    Options: Option[];
-    Values: EnumValue[];
+export interface Enum {
+    Name(): string;
+
+    Values(): EnumValue;
+
 }
 
-export type EnumValue = {
-    Name: string;
-    Value: string;
-    Options: Option[];
+export interface EnumValue {
+    Identifier(): string;
+
+    Number(): string;
 }
