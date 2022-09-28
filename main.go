@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/integrii/flaggy"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"os"
 )
 
 var (
@@ -13,6 +16,8 @@ var (
 )
 
 func main() {
+	log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout})
+
 	// Set the name & basics
 	flaggy.SetName("protogen")
 	flaggy.ShowHelpOnUnexpectedDisable()

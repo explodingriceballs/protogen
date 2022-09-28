@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package api;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/descriptor.proto";
+import "http.proto";
+import "validation.proto";
+
+service Jobs {
+  rpc rpcOne(google.protobuf.Empty) returns (DataListResponse) {
+    option(http.rule) = {
+      get: "/v1/data";
+      body: "*";
+      requires_auth: true;
+    };
+  }
+  rpc createRpcOne(CreateDataRequest) returns (CreateDataResponse) {
+    option(http.rule) = {
+      post: "/v1/data";
+      body: "*";
+      requires_auth: true;
+    };
+  }
+}
+
+enum DataStatus {
+  option(validation.test_bool) = true;
+  DATA_STATUS_UNKNOWN = 0 [deprecated = true];
+  DATA_STATUS_SCHEDULED = 1;
+  DATA_STATUS_RUNNING = 2;
+  DATA_STATUS_FAILED = 3;
+  DATA_STATUS_SUSPENDED = 4;
+}
+
+enum DataFooType {
+  DATA_FOO_TYPE_UNKNOWN = 0;
+  DATA_FOO_TYPE_TIMED = 1;
+  DATA_FOO_TYPE_DEPENDENCY = 2;
+}
+
+message CreateDataRequest {
+  string name = 1 [(validation.format).type = ALPHA];
+  repeated string repeated_string_property = 2 [
+    (validation.format) = {
+      required: false,
+      type: ALPHA_NUM_UNICODE
+    }
+  ];
+  NestedMessageOne msg_one = 3;
+  NestedMessageTwo msg_two = 4;
+  string field = 5;
+}
+
+message NestedMessageOne {
+  DataFooType type = 1;
+  oneof one_type {
+    string string_property = 2;
+    NestedOneOfMessage nested_message = 3;
+  }
+  message NestedOneOfMessage {
+    repeated string value = 1;
+  }
+}
+
+message NestedMessageTwo {
+  string prop1 = 1;
+  string prop2 = 2;
+  string prop3 = 3;
+  string prop4 = 4;
+}
+
+message CreateDataResponse {
+  string data_id = 1;
+}
+
+message DataListResponse {
+  int32 count = 1;
+  repeated Data data = 2;
+  message Data {
+    string id = 1;
+    string name = 2;
+    DataStatus status = 3;
+    string string_property = 4;
+    int64 int_property = 5;
+  }
+}
+
+message ErrorResponse {
+  string msg = 1;
+  int32 error_code = 2;
+}

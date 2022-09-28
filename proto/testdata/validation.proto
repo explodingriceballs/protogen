@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package validation;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/descriptor.proto";
+
+enum FieldValidationType {
+  ALPHA = 0;
+  ALPHA_NUM = 1;
+  ALPHA_NUM_UNICODE = 2;
+  ALPHA_UNICODE = 3;
+  ASCII = 4;
+  MULTIBYTE = 6;
+  PRINT_ASCII = 7;
+  LOWERCASE = 5;
+  UPPERCASE = 8;
+  BASE64 = 9;
+  DATETIME = 10;
+  HEXADECIMAL = 11;
+  HEX_COLOR = 12;
+  LATITUDE = 13;
+  LONGITUDE = 14;
+  UUID = 15;
+}
+
+enum ComparableValidationType {
+  EQ = 0;
+  GT = 1;
+  GTE = 2;
+  LT = 3;
+  LTE = 4;
+  NE = 5;
+  MAX = 6;
+  MIN = 7;
+}
+
+message FormatValidation {
+  bool required = 1;
+  FieldValidationType type = 2;
+  repeated Comparison compare = 3;
+  message Comparison {
+    ComparableValidationType comparator = 4;
+    string value = 5;
+  }
+}
+
+extend google.protobuf.FieldOptions {
+  FormatValidation format = 50001;
+}
+
+extend google.protobuf.EnumOptions {
+  bool test_bool = 50001;
+}
